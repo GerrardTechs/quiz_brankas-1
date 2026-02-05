@@ -434,6 +434,42 @@
             }, 4000);
         }
 
+        // FUNGSI BARU: Validasi digit benar dan posisi salah
+        function validateDigits(userAnswer, correctAnswer) {
+            let correctDigits = 0;
+            let wrongPosition = 0;
+            
+            const userDigits = userAnswer.split('');
+            const correctDigits_arr = correctAnswer.split('');
+            const usedCorrect = new Array(correctDigits_arr.length).fill(false);
+            const usedUser = new Array(userDigits.length).fill(false);
+            
+            // Pertama, cek digit yang posisinya benar
+            for (let i = 0; i < userDigits.length; i++) {
+                if (i < correctDigits_arr.length && userDigits[i] === correctDigits_arr[i]) {
+                    correctDigits++;
+                    usedUser[i] = true;
+                    usedCorrect[i] = true;
+                }
+            }
+            
+            // Kemudian, cek digit yang benar tapi posisinya salah
+            for (let i = 0; i < userDigits.length; i++) {
+                if (!usedUser[i]) {
+                    for (let j = 0; j < correctDigits_arr.length; j++) {
+                        if (!usedCorrect[j] && userDigits[i] === correctDigits_arr[j]) {
+                            correctDigits++;
+                            wrongPosition++;
+                            usedCorrect[j] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return { correctDigits, wrongPosition };
+        }
+
         function verifyCode() {
             const inputs = document.querySelectorAll('.code-input');
             const userAnswer = Array.from(inputs).map(input => input.value).join('');
@@ -451,9 +487,23 @@
                     showSuccessMessage(levels[currentLevel].successMessage);
                 }
             } else {
+                // LOGIKA BARU: Tampilkan informasi digit benar dan posisi salah
+                const validation = validateDigits(userAnswer, correctAnswer);
+                
+                let validationMessage = '';
+                if (validation.correctDigits > 0) {
+                    if (validation.wrongPosition > 0) {
+                        validationMessage = `${validation.correctDigits} Digit benar, ${validation.wrongPosition} posisi salah`;
+                    } else {
+                        validationMessage = `${validation.correctDigits} Digit benar, posisi benar`;
+                    }
+                } else {
+                    validationMessage = 'Semua digit salah';
+                }
+                
                 const inputWrapper = document.getElementById('inputWrapper');
                 inputWrapper.classList.add('shake');
-                showMessage('Akses Ditolak. Coba lagi!', 'error');
+                showMessage(validationMessage, 'info');
                 setTimeout(() => {
                     inputWrapper.classList.remove('shake');
                 }, 500);
@@ -461,7 +511,7 @@
                 inputs[0].focus();
             }
         }
-
+        
         function showFinalMessage() {
             const gameArea = document.getElementById('gameArea');
             const loading = document.getElementById('loading');
